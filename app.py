@@ -54,7 +54,7 @@ def generate_llm_response(client: openai.OpenAI, text: str, model_name: str, lan
     extra_body={},
     model=model_id,
     messages=messages,
-    max_completion_tokens=1024 * 2 
+    max_completion_tokens=1024 * 4 
   )
   response_content = completion.choices[0].message.content
   print(f"LLM: {model_name}\nQuestion: {text}\nResponse: {response_content}")
