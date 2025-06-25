@@ -1,17 +1,16 @@
+import datetime
 import os
 import openai
 import gradio
 from pathlib import Path
 
-DEFAULT_TEXT = "Can you explain to me the origin of the High German, and then provide a simple text in German about its origin and current changes. Make the text concise, clear and signficant for a German language learner"
 SUPPORTED_LANGUAGES = [
   "English",
   "Spanish",
   "German",
   "French",
-  "Chinese",
 ]
-LANGUAGE_CODES = {"English": "en", "Spanish": "es", "German": "de", "French": "fr", "Chinese": "zh"}
+LANGUAGE_CODES = {"English": "en", "Spanish": "es", "German": "de", "French": "fr"}
 AVAILABLE_MODELS = {
   "DeepSeek Llama 70B": "deepseek-r1-distill-llama-70b:free",
   "Llama-3 70B": "meta-llama/llama-3.3-70b-instruct:free",
@@ -19,9 +18,23 @@ AVAILABLE_MODELS = {
   "Llama-4 Maverick": "meta-llama/llama-4-maverick-17b-128e:free",
 }
 
-def generate_speech(text: str | None):
-  if not text:
-    return None 
+def generate_speech(client: openai.OpenAI, text: str | None) -> Path | None: # TTS
+  if not text or text == "" or client.api_key == "":
+    return None
+  try:
+    Path("./tmp").mkdir(parents=True, exist_ok=True)
+    unique_id = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+    speech_filepath = Path(f"./tmp/audiofile_{unique_id}.mp3")
+    print(f"[TTS] Audio file created: {speech_filepath.as_posix()}")
+    with client.audio.speech.with_streaming_response.create(
+        model="gpt-4o-mini-tts", voice="alloy", input=text # 
+    ) as response:
+      response.stream_to_file(speech_filepath)
+      
+    return speech_filepath 
+  except Exception as e:
+    print(f"Error TTS: {e}")
+    return None
 
 def generate_llm_response(client: openai.OpenAI, text: str, model_name: str, language: str):
   # It assumes the OpenAI - OpenRouter client
@@ -41,16 +54,25 @@ def generate_llm_response(client: openai.OpenAI, text: str, model_name: str, lan
     extra_body={},
     model=model_id,
     messages=messages,
-    max_completion_tokens=1024 * 8
+    max_completion_tokens=1024 * 2 
   )
   response_content = completion.choices[0].message.content
   print(f"LLM: {model_name}\nQuestion: {text}\nResponse: {response_content}")
   return response_content 
 
-def transcribe_audio(audio_file: str | Path | None):
+def transcribe_audio(client:openai.OpenAI, audio_file: str | Path | None): # STT
   """Transcribe audio with the OpenAI's Whisper API""" 
-  if audio_file is None:
+  if audio_file is None or client.api_key == "":
     return ""
+  try:
+    with open(audio_file, mode="rb") as audio:
+      transcript = client.audio.transcriptions.create(model="gpt-4o-mini-transcribe", file=audio) # $0.003/min
+      print(f"[STT] Transcription\nText {transcript.text}\n")
+    return transcript.text
+
+  except Exception as e:
+    print(f"Error STT: {e}")
+    return f"Error transcribing audio: {e}"
 
 def process_translation(
     openai_client: openai.OpenAI,
@@ -60,12 +82,12 @@ def process_translation(
   print(f"{audio_file=}, {typed_text=}, {target_language=}, {model_name=}")
   transcribed_text= ""
   if audio_file:
-    transcribed_text = transcribe_audio(audio_file)
+    transcribed_text = transcribe_audio(openai_client, audio_file)
   input_text = typed_text if typed_text else transcribed_text
   if not input_text:
     return "", "", None # Exit if input_text is ""
   llm_response_text = generate_llm_response(openrouter_client, input_text, model_name, target_language)
-  audio_response_path = generate_speech(llm_response_text)
+  audio_response_path = generate_speech(openai_client, llm_response_text)
   return transcribed_text, llm_response_text, audio_response_path
 
 def main(openrouter_api_key: str, openai_api_key: str = ""):
