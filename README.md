@@ -3,6 +3,8 @@
 This project implements a web-based interactive language learning platform. I built this to 
 help my journey learning German.
 
+![Language-Gradio](./images/languages_section.png)
+
 ## Methology
 This is sequencial pipeline design based in `STT->LLM->TTS`. The workflow is as follows:
 1. **Input**: Accept either spoken input (mic) or typed text.
