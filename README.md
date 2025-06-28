@@ -1,9 +1,8 @@
 # Polygot Language Helper
 
-This project implements a web-based interactive language learning platform. I built this to 
-help my journey learning German.
+This project implements a web-based interactive language learning platform using Gradio. I built this because it helps with my German learning process.
 
-![Language-Gradio](./images/languages_section.png)
+https://github.com/user-attachments/assets/2e6de422-7633-4ca7-8cf3-c6c35db0329d
 
 ## Methology
 This is sequencial pipeline design based in `STT->LLM->TTS`. The workflow is as follows:
