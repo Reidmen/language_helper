@@ -45,7 +45,7 @@ pip install openai gradio
 3. Set API environment keys.
 ```bash
 export OPENROUTER_API_KEY="your_openrouter_api_key"
-export OPENAI_API_KEY="your_openai_api_key" # Optional, if only using OpenRouter for LLM. Required for STT/TTS.
+export OPENAI_API_KEY="your_openai_api_key" # Optional, only for STT/TTS.
 ```
 
 ## Usage

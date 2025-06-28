@@ -28,9 +28,9 @@ def generate_speech(client: openai.OpenAI, text: str | None) -> Path | None:  # 
     speech_filepath = Path(f"./tmp/audiofile_{unique_id}.mp3")
     print(f"[TTS] Audio file created: {speech_filepath.as_posix()}")
     with client.audio.speech.with_streaming_response.create(
-      model="gpt-4o-mini-tts", # $0.015/min (mp3) speech
+      model="gpt-4o-mini-tts",  # $0.015/min (mp3) speech
       voice="alloy",
-      input=text, 
+      input=text,
     ) as response:
       response.stream_to_file(speech_filepath)
 
@@ -86,7 +86,7 @@ def process_translation(
   transcribed_text = ""
   if audio_file:
     transcribed_text = transcribe_audio(openai_client, audio_file)
-  input_text = transcribed_text if transcribed_text != "" else typed_text 
+  input_text = transcribed_text if transcribed_text != "" else typed_text
   if not input_text:
     return "", "", None  # Exit if input_text is ""
   llm_response_text = generate_llm_response(openrouter_client, input_text, model_name, target_language)
@@ -99,7 +99,18 @@ def main(openrouter_api_key: str, openai_api_key: str = ""):
   openai_client = openai.OpenAI(api_key=openai_api_key)
 
   with gradio.Blocks() as landing_page:
-    gradio.Markdown("🌍 Let's learn languages...")
+    gradio.Markdown(
+      """
+        <h3 style='text-align: center;'> Bootstrap Yourself & Learn Languages! by <span style='color: #667788; animation: pulsate 1.5s infinite alternate;'>Reidmen 🌎</span></h3>
+        <style>
+            @keyframes pulsate {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.8; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        </style>
+        """
+    )
     with gradio.Row():
       target_language_dropdown = gradio.Dropdown(
         choices=SUPPORTED_LANGUAGES, value="English", label="Target Language", interactive=True
